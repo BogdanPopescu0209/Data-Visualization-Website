@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVION</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.plot.ly/plotly-2.9.0.min.js"></script>
+
+</head>
+
+<body>
+
+    <div class="container-fluid">
+
+        <div class="container-fluid">
+
+            <div class="row">
+
+                <div class="col-xl"></div>
+
+                <div class="col-xl">
+
+                    <img src="logo.png" alt="logo.png" class="logo">
+
+                    <nav>
+
+                        <button class="current" id="button1" onclick="currentTab(this.id)">American
+                            Airlines</button>
+                        <button class="navStyle" id="button2" onclick="currentTab(this.id)">Spirit
+                            Airlines </button>
+                        <button class="navStyle" id="button3" onclick="currentTab(this.id)">JetBlue</button>
+                        <button class="navStyle" id="button4" onclick="currentTab(this.id)">Synthetic Data</button>
+
+                    </nav>
+
+                </div>
+
+                <div class="col-xl"></div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="container-fluid">
+
+            <div class="row">
+
+                <div class="col-xl" id="change">
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <br>
+
+        <div class="row">
+
+            <div class="col-xl"></div>
+
+            <div class="col-xl" id="changePie">
+
+            </div>
+
+            <div class="col-xl"></div>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        let americanAirlines = [];
+        let spiritAirlines = [];
+        let jetBlue = [];
+
+        window.addEventListener('load', async (event) => {
+
+            //Open connection
+            let connection = new WebSocket("wss://0gddfnvtke.execute-api.us-east-1.amazonaws.com/production");
+
+            //Output messages from the server
+            connection.onmessage = function (msg) {
+
+                console.log("Message received.");
+
+                let airlines = JSON.parse(msg.data);
+
+                americanAirlines = airlines[0];
+                spiritAirlines = airlines[1];
+                jetBlue = airlines[2];
+            }
+
+            //Log errors
+            connection.onerror = function (error) {
+
+                console.log("WebSocket Error: " + JSON.stringify(error));
+
+            }
+
+            //Send message to server
+            function sendMessage() {
+
+                //Create message to be sent to server
+                let msgObject = {
+                    action: "sendMessage",//Used for routing in API Gateway
+
+                };
+
+                console.log("Connected");
+
+                //Send message
+                connection.onopen = () => connection.send(JSON.stringify(msgObject));
+
+                //Log result
+                console.log("Message sent: " + JSON.stringify(msgObject));
+            }
+
+            sendMessage();
+
+            setTimeout(() => {
+
+                let change = document.getElementById("change");
+                change.innerHTML = '<div class="lineChart1" id="lineChartDelays" style="width:1800px;height:500px;"></div>' +
+
+                    '<br>' +
+
+                    '<div class="lineChart1" id="lineChartCancellations" style="width:1800px;height:500px;"></div>';
+
+
+                let changePie = document.getElementById("changePie");
+                changePie.innerHTML = '<div class="lineChart2" id="pieChart" style="width:500;height:400;"></div>';
+
+                lineChartDelays(americanAirlines.AA.delays, americanAirlines.AA.dates, americanAirlines.AA.predictions.mean,
+                    americanAirlines.AA.predictions.quantiles1, americanAirlines.AA.predictions.quantiles9);
+                lineChartCancellations(americanAirlines.AA.cancellations, americanAirlines.AA.dates);
+                pieChart(americanAirlines.AA.sentiment_analysis.TWEET_POSITIVE, americanAirlines.AA.sentiment_analysis.TWEET_NEGATIVE,
+                    americanAirlines.AA.sentiment_analysis.TWEET_MIXED, americanAirlines.AA.sentiment_analysis.TWEET_NEUTRAL);
+
+            }, 5000);
+
+        });
+
+        function lineChartDelays(delays, dates, mean, quantiles1, quantiles9) {
+
+            var trace1 = {
+                x: dates,
+                y: delays,
+                mode: 'lines',
+                name: 'Delayes'
+            };
+
+            var trace2 = {
+                x: ['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09', '2019-01-10', '2019-01-11', '2019-01-12', '2019-01-13', '2019-01-14', '2019-01-15', '2019-01-16', '2019-01-17', '2019-01-18', '2019-01-19', '2019-01-20', '2019-01-21', '2019-01-22', '2019-01-23', '2019-01-24', '2019-01-25', '2019-01-26', '2019-01-27', '2019-01-28', '2019-01-29', '2019-01-30', '2019-01-31', '2019-02-01', '2019-02-02', '2019-02-03', '2019-02-04', '2019-02-05', '2019-02-06', '2019-02-07', '2019-02-08', '2019-02-09', '2019-02-10', '2019-02-11', '2019-02-12', '2019-02-13', '2019-02-14', '2019-02-15', '2019-02-16', '2019-02-17', '2019-02-18', '2019-02-19'],
+                y: mean,
+                mode: 'lines',
+                name: 'Mean'
+            };
+
+            var trace3 = {
+                x: ['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09', '2019-01-10', '2019-01-11', '2019-01-12', '2019-01-13', '2019-01-14', '2019-01-15', '2019-01-16', '2019-01-17', '2019-01-18', '2019-01-19', '2019-01-20', '2019-01-21', '2019-01-22', '2019-01-23', '2019-01-24', '2019-01-25', '2019-01-26', '2019-01-27', '2019-01-28', '2019-01-29', '2019-01-30', '2019-01-31', '2019-02-01', '2019-02-02', '2019-02-03', '2019-02-04', '2019-02-05', '2019-02-06', '2019-02-07', '2019-02-08', '2019-02-09', '2019-02-10', '2019-02-11', '2019-02-12', '2019-02-13', '2019-02-14', '2019-02-15', '2019-02-16', '2019-02-17', '2019-02-18', '2019-02-19'],
+                y: quantiles1,
+                mode: 'lines',
+                name: 'Quantiles 0.1'
+            };
+
+            var trace4 = {
+                x: ['2019-01-01', '2019-01-02', '2019-01-03', '2019-01-04', '2019-01-05', '2019-01-06', '2019-01-07', '2019-01-08', '2019-01-09', '2019-01-10', '2019-01-11', '2019-01-12', '2019-01-13', '2019-01-14', '2019-01-15', '2019-01-16', '2019-01-17', '2019-01-18', '2019-01-19', '2019-01-20', '2019-01-21', '2019-01-22', '2019-01-23', '2019-01-24', '2019-01-25', '2019-01-26', '2019-01-27', '2019-01-28', '2019-01-29', '2019-01-30', '2019-01-31', '2019-02-01', '2019-02-02', '2019-02-03', '2019-02-04', '2019-02-05', '2019-02-06', '2019-02-07', '2019-02-08', '2019-02-09', '2019-02-10', '2019-02-11', '2019-02-12', '2019-02-13', '2019-02-14', '2019-02-15', '2019-02-16', '2019-02-17', '2019-02-18', '2019-02-19'],
+                y: quantiles9,
+                mode: 'lines',
+                name: 'Quantiles 0.9'
+            };
+
+            var data = [trace1, trace2, trace3, trace4];
+
+            var layout = {
+                title: 'Delays'
+            };
+
+            Plotly.newPlot('lineChartDelays', data, layout);
+
+        }
+
+        function lineChartCancellations(cancellations, dates) {
+
+            var trace2 = {
+                x: dates,
+                y: cancellations,
+                mode: 'lines',
+                line: {
+                    color: "rgb (255,0,0)"
+                },
+                name: 'Cancellations'
+            };
+
+            var data = [trace2];
+
+            var layout = {
+                title: 'Cancellations'
+            };
+
+            Plotly.newPlot('lineChartCancellations', data, layout);
+
+        }
+
+        function lineChartSyntheticData() {
+
+            var trace1 = {
+                y: [67.56211322080162, 72.2880387538293, 69.27856823506464, 68.65803295192886, 73.33191214657938, 70.71533714487359, 72.45721552143605, 74.13774306240624, 75.0256488603322, 80.1380132310472, 80.03116468905719, 82.16335463344521, 77.00283916512358, 84.80214034471673, 83.24788858781929, 85.0663281949264, 85.41174269792512, 78.32539375844598, 76.60490895836773, 79.83124059343173, 78.21396682522798, 74.78822232073614, 76.82782738812732, 76.92602423307724, 72.83055251989147, 69.76709436171565, 70.2235492289468, 75.4014459826125, 76.44000798870532, 77.98280909204631, 78.02769305020433, 77.51226129748946, 79.13409544671546, 83.67876996627983, 82.41652658409441, 82.18366613580153, 86.64094321775048, 86.05296992109855, 83.01440245063527, 88.18646812078289, 85.37986162544513, 80.47913587278924, 80.55985054651575, 78.34700745628369, 78.108116669807, 79.54485989329457, 74.57501009171924, 79.60725820602498, 78.19099123019242, 79.39435523616865, 75.46051337277275, 75.2657678689865, 79.35591908855184, 81.65618845838922, 76.30834219695605, 80.58768091423434, 79.16481942536059, 79.78072837083262, 83.15724610540109, 87.98164180658988, 85.752431944895, 84.12863773867325, 91.64091015432442, 91.96982003654577, 88.24102916841436, 88.03260884731169, 85.38547092878086, 86.09698263193968, 84.57979831370507, 82.90218723958752, 81.95319228552002, 81.89211504682275, 79.30238156288388, 82.03556914282747, 80.70566223816826, 80.36983553667187, 81.85134737713749, 84.49782945076917, 80.61401094459093, 80.55796169744842, 86.1849185482451, 88.57683390999367, 91.75513738913997, 90.35733078589979, 86.64956587145511, 91.30015946320479, 89.05416917927352, 87.99726008399594, 91.03705633927943, 90.05762686003285, 90.45923697068838, 87.49147398191978, 89.2499755274846, 87.71818262549927, 82.8569327031043, 83.47472569033489, 85.33872628234631, 78.83009858475617, 83.43027222380493, 81.50032284057829],
+                mode: 'lines',
+                name: 'Original'
+            };
+
+            var trace2 = {
+                x: [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149],
+                y: [
+                    90.5561904907,
+                    90.5809249878,
+                    90.474395752,
+                    90.4450073242,
+                    88.8943939209,
+                    89.8494949341,
+                    89.8491897583,
+                    90.104347229,
+                    89.79712677,
+                    89.9306030273,
+                    88.0900115967,
+                    87.4141616821,
+                    85.8569335938,
+                    84.8110580444,
+                    84.0327835083,
+                    84.7696228027,
+                    84.9725952148,
+                    86.7015686035,
+                    86.5827407837,
+                    87.6992416382,
+                    89.9853134155,
+                    91.7013015747,
+                    91.9973754883,
+                    92.7263565063,
+                    93.8350753784,
+                    91.7712020874,
+                    92.8452224731,
+                    93.045173645,
+                    93.8422470093,
+                    93.9765853882,
+                    92.9191665649,
+                    94.1413803101,
+                    93.4509048462,
+                    93.1967849731,
+                    92.8855743408,
+                    92.5537567139,
+                    90.5525665283,
+                    90.1613311768,
+                    88.7321777344,
+                    90.9291763306,
+                    92.619354248,
+                    93.0554275513,
+                    94.2496109009,
+                    94.1243057251,
+                    93.0501556396,
+                    95.2646484375,
+                    95.388885498,
+                    96.7155685425,
+                    97.9896469116,
+                    97.9011917114
+                ],
+                mode: 'lines',
+                name: 'Mean'
+            };
+
+            var trace3 = {
+                x: [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149],
+                y: [
+                    86.7381668091,
+                    87.3422317505,
+                    87.3152618408,
+                    86.878074646,
+                    86.5685958862,
+                    86.5115890503,
+                    86.800201416,
+                    86.8230056763,
+                    86.3654632568,
+                    86.3098068237,
+                    83.8517913818,
+                    83.5741119385,
+                    82.4730148315,
+                    80.6582946777,
+                    81.5575942993,
+                    81.8176651001,
+                    81.6448898315,
+                    83.3982696533,
+                    84.1495819092,
+                    84.2696228027,
+                    86.2307434082,
+                    89.1573181152,
+                    88.6360092163,
+                    89.5925827026,
+                    89.3731842041,
+                    88.266242981,
+                    89.2139663696,
+                    89.6742935181,
+                    90.9289932251,
+                    91.3272247314,
+                    88.2316055298,
+                    90.9169006348,
+                    90.0891342163,
+                    90.3167877197,
+                    90.4833984375,
+                    88.9724273682,
+                    87.7027206421,
+                    87.248336792,
+                    85.5892410278,
+                    86.9760818481,
+                    89.1434631348,
+                    90.2223739624,
+                    91.004119873,
+                    90.9518661499,
+                    90.1954116821,
+                    91.0902633667,
+                    91.434753418,
+                    93.2095413208,
+                    94.9179153442,
+                    94.0306854248
+                ],
+                mode: 'lines',
+                name: 'Quantiles 0.1'
+            };
+
+            var trace4 = {
+                x: [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149],
+                y: [
+                    94.2223815918,
+                    93.2444458008,
+                    93.4471054077,
+                    95.2250366211,
+                    91.8896789551,
+                    92.5756454468,
+                    92.5885925293,
+                    93.4028549194,
+                    92.9790344238,
+                    95.5764541626,
+                    91.8019180298,
+                    91.5889892578,
+                    90.6658782959,
+                    88.7744293213,
+                    86.8778457642,
+                    89.2981567383,
+                    88.609375,
+                    91.8405075073,
+                    90.8193206787,
+                    91.2950897217,
+                    94.0591888428,
+                    94.6459121704,
+                    95.8089294434,
+                    96.7323760986,
+                    98.0582885742,
+                    96.0219268799,
+                    97.7734298706,
+                    96.5176544189,
+                    96.0910186768,
+                    97.919960022,
+                    96.9834747314,
+                    98.0800094604,
+                    97.5360870361,
+                    96.8537445068,
+                    95.5098876953,
+                    96.2319412231,
+                    93.8940505981,
+                    93.2686233521,
+                    91.1602783203,
+                    94.9329452515,
+                    96.6981048584,
+                    97.4052047729,
+                    98.5535430908,
+                    97.4738006592,
+                    96.720161438,
+                    98.2790222168,
+                    99.0136260986,
+                    100.4866104126,
+                    101.7294082642,
+                    101.7392730713
+                ],
+                mode: 'lines',
+                name: 'Quantiles 0.9'
+            };
+
+            var data = [trace1, trace2, trace3, trace4];
+
+            var layout = {
+                title: 'Synthetic Data'
+            };
+
+            Plotly.newPlot('lineChartSyntheticData', data, layout);
+
+        }
+
+        function pieChart(positive, negative, mixed, neutral) {
+
+            var data = [{
+                values: [positive, negative, mixed, neutral],
+                labels: ['Postive', 'Negative', 'Mixed', 'Neutral'],
+                type: 'pie'
+            }];
+
+            Plotly.newPlot('pieChart', data);
+        }
+
+        function currentTab(button) {
+
+            let getClass1, getClass2, getClass3, getClass4;
+
+            if (button === "button1") {
+
+                getClass1 = document.getElementById("button1").className = "current";
+                getClass2 = document.getElementById("button2").className = "navStyle";
+                getClass3 = document.getElementById("button3").className = "navStyle";
+                getClass4 = document.getElementById("button4").className = "navStyle";
+
+                let change = document.getElementById("change");
+                change.innerHTML = '<div class="lineChart1" id="lineChartDelays" style="width:1800px;height:500px;"></div>' +
+
+                    '<br>' +
+
+                    '<div class="lineChart1" id="lineChartCancellations" style="width:1800px;height:500px;"></div>';
+
+
+                let changePie = document.getElementById("changePie");
+                changePie.innerHTML = '<div class="lineChart2" id="pieChart" style="width:500;height:400;"></div>';
+
+                lineChartDelays(americanAirlines.AA.delays, americanAirlines.AA.dates, americanAirlines.AA.predictions.mean,
+                    americanAirlines.AA.predictions.quantiles1, americanAirlines.AA.predictions.quantiles9);
+                lineChartCancellations(americanAirlines.AA.cancellations, americanAirlines.AA.dates);
+                pieChart(americanAirlines.AA.sentiment_analysis.TWEET_POSITIVE, americanAirlines.AA.sentiment_analysis.TWEET_NEGATIVE,
+                    americanAirlines.AA.sentiment_analysis.TWEET_MIXED, americanAirlines.AA.sentiment_analysis.TWEET_NEUTRAL);
+
+            }
+
+            if (button === "button2") {
+
+                getClass1 = document.getElementById("button1").className = "navStyle";
+                getClass2 = document.getElementById("button2").className = "current";
+                getClass3 = document.getElementById("button3").className = "navStyle";
+                getClass4 = document.getElementById("button4").className = "navStyle";
+
+                let change = document.getElementById("change");
+                change.innerHTML = '<div class="lineChart1" id="lineChartDelays" style="width:1800px;height:500px;"></div>' +
+
+                    '<br>' +
+
+                    '<div class="lineChart1" id="lineChartCancellations" style="width:1800px;height:500px;"></div>';
+
+
+                let changePie = document.getElementById("changePie");
+                changePie.innerHTML = '<div class="lineChart2" id="pieChart" style="width:500;height:400;"></div>';
+
+                lineChartDelays(spiritAirlines.NK.delays, spiritAirlines.NK.dates, spiritAirlines.NK.predictions.mean, spiritAirlines.NK.predictions.quantiles1,
+                    spiritAirlines.NK.predictions.quantiles9);
+                lineChartCancellations(spiritAirlines.NK.cancellations, spiritAirlines.NK.dates);
+                pieChart(spiritAirlines.NK.sentiment_analysis.TWEET_POSITIVE, spiritAirlines.NK.sentiment_analysis.TWEET_NEGATIVE,
+                    spiritAirlines.NK.sentiment_analysis.TWEET_MIXED, spiritAirlines.NK.sentiment_analysis.TWEET_NEUTRAL);
+
+            }
+
+            if (button === "button3") {
+
+                getClass1 = document.getElementById("button1").className = "navStyle";
+                getClass2 = document.getElementById("button2").className = "navStyle";
+                getClass3 = document.getElementById("button3").className = "current";
+                getClass4 = document.getElementById("button4").className = "navStyle";
+
+                let change = document.getElementById("change");
+                change.innerHTML = '<div class="lineChart1" id="lineChartDelays" style="width:1800px;height:500px;"></div>' +
+
+                    '<br>' +
+
+                    '<div class="lineChart1" id="lineChartCancellations" style="width:1800px;height:500px;"></div>';
+
+
+                let changePie = document.getElementById("changePie");
+                changePie.innerHTML = '<div class="lineChart2" id="pieChart" style="width:500;height:400;"></div>';
+
+                lineChartDelays(jetBlue.B6.delays, jetBlue.B6.dates, jetBlue.B6.predictions.mean, jetBlue.B6.predictions.quantiles1, jetBlue.B6.predictions.quantiles9);
+                lineChartCancellations(jetBlue.B6.cancellations, jetBlue.B6.dates);
+                pieChart(jetBlue.B6.sentiment_analysis.TWEET_POSITIVE, jetBlue.B6.sentiment_analysis.TWEET_NEGATIVE,
+                    jetBlue.B6.sentiment_analysis.TWEET_MIXED, jetBlue.B6.sentiment_analysis.TWEET_NEUTRAL);
+
+            }
+
+
+            if (button === "button4") {
+
+                getClass1 = document.getElementById("button1").className = "navStyle";
+                getClass2 = document.getElementById("button2").className = "navStyle";
+                getClass3 = document.getElementById("button3").className = "navStyle";
+                getClass4 = document.getElementById("button4").className = "current";
+
+                let change = document.getElementById("change");
+                change.innerHTML = '<div class="lineChart1" id="lineChartSyntheticData" style="width:1800px;height:500px;"></div>';
+
+                let changePie = document.getElementById("changePie");
+                changePie.innerHTML = '<div></div>';
+
+                lineChartSyntheticData();
+
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+.logo{
+    width: 200px;
+    height: 200px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+nav{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.navStyle{
+    margin-right: 10px;
+    background-color: transparent;
+    border-color: transparent;
+    font-weight: bold;
+    font-size: 15px;
+    border-radius: 5px;
+    color: rgb(64, 62, 62);
+}
+
+.current{
+    border-radius: 5px;
+    margin-right: 10px;
+    background-color: rgb(199, 4, 4);
+    color: rgb(64, 62, 62);
+    border-color: transparent;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.lineChart1{
+    float: center;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.lineChart2{
+    float: center;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
